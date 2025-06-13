@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document Formatter</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -21,7 +20,7 @@
         .container {
             background-color: #ffffff;
             border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
             max-width: 900px;
             width: 100%;
             padding: 2rem;
@@ -29,7 +28,7 @@
             flex-direction: column;
             gap: 1.5rem;
         }
-        textarea {
+        .input-contenteditable {
             border: 1px solid #d1d5db;
             border-radius: 0.5rem;
             padding: 1rem;
@@ -37,19 +36,19 @@
             line-height: 1.5;
             color: #374151;
             min-height: 200px;
-            resize: vertical;
             outline: none;
             transition: border-color 0.2s;
             font-family: 'Roboto', sans-serif;
+            background: #fff;
         }
-        textarea:focus {
+        .input-contenteditable:focus {
             border-color: #6366f1;
         }
         #output-content {
             border: 1px solid #d1d5db;
             border-radius: 0.5rem;
             padding: 1rem;
-            background: #fff; /* Pure white, so copy won't pick up color */
+            background: #fff;
             min-height: 200px;
             font-family: 'Roboto', sans-serif;
             color: #090a0e;
@@ -63,7 +62,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s, transform 0.1s;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
             border: none;
             font-family: 'Roboto', sans-serif;
         }
@@ -75,7 +74,7 @@
             transform: translateY(0);
             box-shadow: none;
         }
-        /* Heading Styles */
+        /* Output Formatting */
         #output-content h1 {
             font-size: 23pt;
             font-family: 'Roboto', sans-serif;
@@ -128,17 +127,6 @@
         #output-content li {
             margin-bottom: 0.25rem;
         }
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border-width: 0;
-        }
         @media (max-width: 768px) {
             .container {
                 padding: 1.5rem;
@@ -154,10 +142,8 @@
     <div class="container">
         <h1 class="text-3xl font-bold text-center text-[#090a0e] mb-4" style="font-family: 'Roboto', sans-serif;">Document Formatter</h1>
         <div class="input-section">
-            <label for="raw-text-input" class="block text-sm font-medium text-gray-700 mb-2">Enter your raw text here:</label>
-            <textarea id="raw-text-input" placeholder="Type or paste your document content here.
-Use # for H1, ## for H2, ### for H3.
-Use * or - for bullet points."></textarea>
+            <label for="raw-text-input" class="block text-sm font-medium text-gray-700 mb-2">Paste or type your rich content here:</label>
+            <div id="raw-text-input" class="input-contenteditable" contenteditable="true" spellcheck="true" aria-label="Paste or type your rich content here"></div>
         </div>
         <button onclick="formatDocument()">Format Document</button>
         <div class="output-section">
@@ -167,75 +153,82 @@ Use * or - for bullet points."></textarea>
         </div>
     </div>
     <script>
-        function formatDocument() {
-            const rawTextInput = document.getElementById('raw-text-input').value;
-            const outputContent = document.getElementById('output-content');
-            let formattedHtml = '';
-            const lines = rawTextInput.split('\n');
-            let inList = false;
+        // Utility: Clean up pasted content, keep basic tags, map to our standard
+        function parseAndFormatHTML(inputHtml) {
+            // Create a DOM element to parse the HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = inputHtml;
 
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i].trim();
+            let output = '';
 
-                if (line.startsWith('### ')) {
-                    if (inList) {
-                        formattedHtml += '</ul>\n';
-                        inList = false;
-                    }
-                    formattedHtml += `<h3>${line.substring(4).trim()}</h3>\n`;
-                } else if (line.startsWith('## ')) {
-                    if (inList) {
-                        formattedHtml += '</ul>\n';
-                        inList = false;
-                    }
-                    formattedHtml += `<h2>${line.substring(3).trim()}</h2>\n`;
-                } else if (line.startsWith('# ')) {
-                    if (inList) {
-                        formattedHtml += '</ul>\n';
-                        inList = false;
-                    }
-                    formattedHtml += `<h1>${line.substring(2).trim()}</h1>\n`;
-                } else if (line.startsWith('* ') || line.startsWith('- ')) {
-                    if (!inList) {
-                        formattedHtml += '<ul>\n';
-                        inList = true;
-                    }
-                    formattedHtml += `<li>${line.substring(2).trim()}</li>\n`;
-                    // If it's the last line, close the list
-                    if (i === lines.length - 1) {
-                        formattedHtml += '</ul>\n';
-                        inList = false;
-                    }
-                } else if (line.length > 0) {
-                    if (inList) {
-                        formattedHtml += '</ul>\n';
-                        inList = false;
-                    }
-                    formattedHtml += `<p>${line}</p>\n`;
-                } else {
-                    // Empty line
-                    if (inList) {
-                        // If next non-empty line is not a list item, close the list
-                        let nextListItem = false;
-                        for (let j = i + 1; j < lines.length; j++) {
-                            let nextLine = lines[j].trim();
-                            if (nextLine.length === 0) continue;
-                            if (nextLine.startsWith('* ') || nextLine.startsWith('- ')) {
-                                nextListItem = true;
+            function processNode(node) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    // Keep text nodes
+                    const text = node.textContent.trim();
+                    if (text) output += `<p>${text}</p>\n`;
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    let tag = node.tagName.toLowerCase();
+
+                    // Map common rich text tags to our rules
+                    if (tag === 'h1') {
+                        output += `<h1>${node.textContent.trim()}</h1>\n`;
+                    } else if (tag === 'h2') {
+                        output += `<h2>${node.textContent.trim()}</h2>\n`;
+                    } else if (tag === 'h3') {
+                        output += `<h3>${node.textContent.trim()}</h3>\n`;
+                    } else if (tag === 'ul' || tag === 'ol') {
+                        output += '<ul>\n';
+                        for (const child of node.children) {
+                            if (child.tagName.toLowerCase() === 'li') {
+                                output += `<li>${child.textContent.trim()}</li>\n`;
                             }
-                            break;
                         }
-                        if (!nextListItem) {
-                            formattedHtml += '</ul>\n';
-                            inList = false;
+                        output += '</ul>\n';
+                    } else if (tag === 'li') {
+                        // handled above
+                    } else if (tag === 'b' || tag === 'strong') {
+                        output += `<p><strong>${node.textContent.trim()}</strong></p>\n`;
+                    } else if (tag === 'i' || tag === 'em') {
+                        output += `<p><em>${node.textContent.trim()}</em></p>\n`;
+                    } else if (tag === 'p' || tag === 'div') {
+                        // Recursively process children for paragraphs/divs
+                        let hasBlockChild = false;
+                        for (const child of node.childNodes) {
+                            if (child.nodeType === Node.ELEMENT_NODE &&
+                                ['h1','h2','h3','ul','ol','li','p','div'].includes(child.tagName.toLowerCase())) {
+                                hasBlockChild = true; break;
+                            }
                         }
+                        if (hasBlockChild) {
+                            for (const child of node.childNodes) processNode(child);
+                        } else {
+                            // treat as paragraph
+                            const text = node.textContent.trim();
+                            if (text) output += `<p>${text}</p>\n`;
+                        }
+                    } else if (tag === 'br') {
+                        // ignore, spacing handled by block tags
+                    } else {
+                        // For unknown tags, process children
+                        for (const child of node.childNodes) processNode(child);
                     }
                 }
             }
-            // If a list was open at the end, close it
-            if (inList) {
-                formattedHtml += '</ul>\n';
-            }
+
+            // Process all child nodes of the input
+            for (const node of tempDiv.childNodes) processNode(node);
+
+            return output;
+        }
+
+        function formatDocument() {
+            const rawInputDiv = document.getElementById('raw-text-input');
+            const outputContent = document.getElementById('output-content');
+            const inputHtml = rawInputDiv.innerHTML;
+
+            // Convert pasted HTML to formatted HTML as per rules
+            const formattedHtml = parseAndFormatHTML(inputHtml);
+
             outputContent.innerHTML = formattedHtml;
         }
 
@@ -244,12 +237,11 @@ Use * or - for bullet points."></textarea>
             // Create a temporary element to avoid background copying
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = outputContent.innerHTML;
-            tempDiv.style.background = '#fff'; // Ensure background is white
+            tempDiv.style.background = '#fff';
             tempDiv.style.color = '#090a0e';
             tempDiv.style.fontFamily = 'Roboto, sans-serif';
             document.body.appendChild(tempDiv);
 
-            // Select HTML content
             const range = document.createRange();
             range.selectNodeContents(tempDiv);
             const selection = window.getSelection();
