@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Formatter</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-width: 900px;
+            width: 100%;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        textarea, #output-content {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #374151;
+            min-height: 200px;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        textarea:focus {
+            border-color: #6366f1;
+        }
+        #output-content {
+            background-color: #f9fafb;
+            overflow-y: auto;
+        }
+        button {
+            background-color: #090a0e;
+            color: #fefff8;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: none;
+        }
+        button:hover {
+            background-color: #2b2e35;
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        #output-content h1 {
+            font-size: 23pt;
+            font-family: 'Roboto', sans-serif;
+            color: #090a0e;
+            margin-bottom: 1rem;
+        }
+        #output-content h2 {
+            font-size: 17pt;
+            font-family: 'Roboto', sans-serif;
+            color: #090a0e;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+        #output-content h2::after {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 1px;
+            background-color: #d1d5db;
+            margin-top: 0.5rem;
+        }
+        #output-content h3 {
+            font-size: 13pt;
+            font-family: 'Roboto', sans-serif;
+            color: #090a0e;
+            margin-top: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        #output-content p {
+            font-size: 11pt;
+            font-family: 'Roboto', sans-serif;
+            color: #090a0e;
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+        }
+        #output-content ul {
+            list-style-type: disc;
+            margin-left: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 11pt;
+            color: #090a0e;
+        }
+        #output-content li {
+            margin-bottom: 0.25rem;
+        }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+            body {
+                padding: 1rem;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center text-[#090a0e] mb-4">Document Formatter</h1>
+        <div class="input-section">
+            <label for="raw-text-input" class="block text-sm font-medium text-gray-700 mb-2">Enter your raw text here:</label>
+            <textarea id="raw-text-input" placeholder="Type or paste your document content here.
+Use # for H1, ## for H2, ### for H3.
+Use * or - for bullet points."></textarea>
+        </div>
+        <button onclick="formatDocument()">Format Document</button>
+        <div class="output-section">
+            <label for="output-content" class="block text-sm font-medium text-gray-700 mb-2">Formatted Document (HTML Output):</label>
+            <div id="output-content" class="border border-gray-300 rounded-lg bg-gray-50 overflow-auto">
+                <!-- Formatted content will appear here -->
+            </div>
+            <button onclick="copyFormattedText()" class="mt-4">Copy Formatted Text</button>
+        </div>
+    </div>
+    <script>
+        function formatDocument() {
+            const rawTextInput = document.getElementById('raw-text-input').value;
+            const outputContent = document.getElementById('output-content');
+            let formattedHtml = '';
+            const lines = rawTextInput.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                if (line.startsWith('### ')) {
+                    formattedHtml += `<h3>${line.substring(4).trim()}</h3>\n`;
+                } else if (line.startsWith('## ')) {
+                    formattedHtml += `<h2>${line.substring(3).trim()}</h2>\n`;
+                } else if (line.startsWith('# ')) {
+                    formattedHtml += `<h1>${line.substring(2).trim()}</h1>\n`;
+                } else if (line.startsWith('* ') || line.startsWith('- ')) {
+                    if (!formattedHtml.endsWith('<ul>\n') && !formattedHtml.endsWith('</ul>\n') && !formattedHtml.includes('<ul>')) {
+                         formattedHtml += '<ul>\n';
+                    }
+                    formattedHtml += `<li>${line.substring(2).trim()}</li>\n`;
+                    let nextLineIsListItem = false;
+                    for (let j = i + 1; j < lines.length; j++) {
+                        let nextLine = lines[j].trim();
+                        if (nextLine.startsWith('* ') || nextLine.startsWith('- ')) {
+                            nextLineIsListItem = true;
+                            break;
+                        }
+                        if (nextLine.length > 0) {
+                            break;
+                        }
+                    }
+                    if (!nextLineIsListItem && formattedHtml.endsWith('</li>\n')) {
+                        formattedHtml += '</ul>\n';
+                    } else if (i === lines.length - 1 && formattedHtml.endsWith('</li>\n')) {
+                         formattedHtml += '</ul>\n';
+                    }
+                } else if (line.length > 0) {
+                    if (formattedHtml.endsWith('</ul>\n')) {
+                        formattedHtml = formattedHtml.substring(0, formattedHtml.length - '</ul>\n'.length);
+                        formattedHtml += '</ul>\n';
+                    }
+                    formattedHtml += `<p>${line}</p>\n`;
+                } else {
+                    formattedHtml += '\n';
+                }
+            }
+            outputContent.innerHTML = formattedHtml;
+        }
+        function copyFormattedText() {
+            const outputContent = document.getElementById('output-content');
+            const range = document.createRange();
+            range.selectNode(outputContent);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            try {
+                document.execCommand('copy');
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                alert('Could not copy text. Please manually select and copy from the output box.');
+            }
+            window.getSelection().removeAllRanges();
+        }
+        window.onload = function() {};
+    </script>
+</body>
+</html>
