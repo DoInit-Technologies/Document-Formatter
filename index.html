@@ -6,6 +6,7 @@
     <title>Document Formatter</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Roboto', sans-serif;
@@ -28,7 +29,7 @@
             flex-direction: column;
             gap: 1.5rem;
         }
-        textarea, #output-content {
+        textarea {
             border: 1px solid #d1d5db;
             border-radius: 0.5rem;
             padding: 1rem;
@@ -39,12 +40,19 @@
             resize: vertical;
             outline: none;
             transition: border-color 0.2s;
+            font-family: 'Roboto', sans-serif;
         }
         textarea:focus {
             border-color: #6366f1;
         }
         #output-content {
-            background-color: #f9fafb;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background: #fff; /* Pure white, so copy won't pick up color */
+            min-height: 200px;
+            font-family: 'Roboto', sans-serif;
+            color: #090a0e;
             overflow-y: auto;
         }
         button {
@@ -57,6 +65,7 @@
             transition: background-color 0.2s, transform 0.1s;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             border: none;
+            font-family: 'Roboto', sans-serif;
         }
         button:hover {
             background-color: #2b2e35;
@@ -66,16 +75,20 @@
             transform: translateY(0);
             box-shadow: none;
         }
+        /* Heading Styles */
         #output-content h1 {
             font-size: 23pt;
             font-family: 'Roboto', sans-serif;
             color: #090a0e;
             margin-bottom: 1rem;
+            margin-top: 1.5rem;
+            font-weight: 700;
         }
         #output-content h2 {
             font-size: 17pt;
             font-family: 'Roboto', sans-serif;
             color: #090a0e;
+            font-weight: 500;
             margin-top: 1.5rem;
             margin-bottom: 1rem;
             position: relative;
@@ -87,12 +100,13 @@
             width: 100%;
             height: 1px;
             background-color: #d1d5db;
-            margin-top: 0.5rem;
+            margin-top: 0.6rem;
         }
         #output-content h3 {
             font-size: 13pt;
             font-family: 'Roboto', sans-serif;
             color: #090a0e;
+            font-weight: 500;
             margin-top: 1rem;
             margin-bottom: 0.75rem;
         }
@@ -108,6 +122,7 @@
             margin-left: 1.5rem;
             margin-bottom: 0.75rem;
             font-size: 11pt;
+            font-family: 'Roboto', sans-serif;
             color: #090a0e;
         }
         #output-content li {
@@ -134,11 +149,10 @@
             }
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1 class="text-3xl font-bold text-center text-[#090a0e] mb-4">Document Formatter</h1>
+        <h1 class="text-3xl font-bold text-center text-[#090a0e] mb-4" style="font-family: 'Roboto', sans-serif;">Document Formatter</h1>
         <div class="input-section">
             <label for="raw-text-input" class="block text-sm font-medium text-gray-700 mb-2">Enter your raw text here:</label>
             <textarea id="raw-text-input" placeholder="Type or paste your document content here.
@@ -148,9 +162,7 @@ Use * or - for bullet points."></textarea>
         <button onclick="formatDocument()">Format Document</button>
         <div class="output-section">
             <label for="output-content" class="block text-sm font-medium text-gray-700 mb-2">Formatted Document (HTML Output):</label>
-            <div id="output-content" class="border border-gray-300 rounded-lg bg-gray-50 overflow-auto">
-                <!-- Formatted content will appear here -->
-            </div>
+            <div id="output-content" class="border border-gray-300 rounded-lg overflow-auto"></div>
             <button onclick="copyFormattedText()" class="mt-4">Copy Formatted Text</button>
         </div>
     </div>
@@ -160,62 +172,99 @@ Use * or - for bullet points."></textarea>
             const outputContent = document.getElementById('output-content');
             let formattedHtml = '';
             const lines = rawTextInput.split('\n');
+            let inList = false;
+
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].trim();
+
                 if (line.startsWith('### ')) {
+                    if (inList) {
+                        formattedHtml += '</ul>\n';
+                        inList = false;
+                    }
                     formattedHtml += `<h3>${line.substring(4).trim()}</h3>\n`;
                 } else if (line.startsWith('## ')) {
+                    if (inList) {
+                        formattedHtml += '</ul>\n';
+                        inList = false;
+                    }
                     formattedHtml += `<h2>${line.substring(3).trim()}</h2>\n`;
                 } else if (line.startsWith('# ')) {
+                    if (inList) {
+                        formattedHtml += '</ul>\n';
+                        inList = false;
+                    }
                     formattedHtml += `<h1>${line.substring(2).trim()}</h1>\n`;
                 } else if (line.startsWith('* ') || line.startsWith('- ')) {
-                    if (!formattedHtml.endsWith('<ul>\n') && !formattedHtml.endsWith('</ul>\n') && !formattedHtml.includes('<ul>')) {
-                         formattedHtml += '<ul>\n';
+                    if (!inList) {
+                        formattedHtml += '<ul>\n';
+                        inList = true;
                     }
                     formattedHtml += `<li>${line.substring(2).trim()}</li>\n`;
-                    let nextLineIsListItem = false;
-                    for (let j = i + 1; j < lines.length; j++) {
-                        let nextLine = lines[j].trim();
-                        if (nextLine.startsWith('* ') || nextLine.startsWith('- ')) {
-                            nextLineIsListItem = true;
-                            break;
-                        }
-                        if (nextLine.length > 0) {
-                            break;
-                        }
-                    }
-                    if (!nextLineIsListItem && formattedHtml.endsWith('</li>\n')) {
+                    // If it's the last line, close the list
+                    if (i === lines.length - 1) {
                         formattedHtml += '</ul>\n';
-                    } else if (i === lines.length - 1 && formattedHtml.endsWith('</li>\n')) {
-                         formattedHtml += '</ul>\n';
+                        inList = false;
                     }
                 } else if (line.length > 0) {
-                    if (formattedHtml.endsWith('</ul>\n')) {
-                        formattedHtml = formattedHtml.substring(0, formattedHtml.length - '</ul>\n'.length);
+                    if (inList) {
                         formattedHtml += '</ul>\n';
+                        inList = false;
                     }
                     formattedHtml += `<p>${line}</p>\n`;
                 } else {
-                    formattedHtml += '\n';
+                    // Empty line
+                    if (inList) {
+                        // If next non-empty line is not a list item, close the list
+                        let nextListItem = false;
+                        for (let j = i + 1; j < lines.length; j++) {
+                            let nextLine = lines[j].trim();
+                            if (nextLine.length === 0) continue;
+                            if (nextLine.startsWith('* ') || nextLine.startsWith('- ')) {
+                                nextListItem = true;
+                            }
+                            break;
+                        }
+                        if (!nextListItem) {
+                            formattedHtml += '</ul>\n';
+                            inList = false;
+                        }
+                    }
                 }
+            }
+            // If a list was open at the end, close it
+            if (inList) {
+                formattedHtml += '</ul>\n';
             }
             outputContent.innerHTML = formattedHtml;
         }
+
         function copyFormattedText() {
             const outputContent = document.getElementById('output-content');
+            // Create a temporary element to avoid background copying
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = outputContent.innerHTML;
+            tempDiv.style.background = '#fff'; // Ensure background is white
+            tempDiv.style.color = '#090a0e';
+            tempDiv.style.fontFamily = 'Roboto, sans-serif';
+            document.body.appendChild(tempDiv);
+
+            // Select HTML content
             const range = document.createRange();
-            range.selectNode(outputContent);
-            window.getSelection().removeAllRanges();
-            window.getSelection().addRange(range);
+            range.selectNodeContents(tempDiv);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+
             try {
                 document.execCommand('copy');
             } catch (err) {
                 console.error('Failed to copy text: ', err);
                 alert('Could not copy text. Please manually select and copy from the output box.');
             }
-            window.getSelection().removeAllRanges();
+            selection.removeAllRanges();
+            document.body.removeChild(tempDiv);
         }
-        window.onload = function() {};
     </script>
 </body>
 </html>
